@@ -1,5 +1,6 @@
 require('dotenv').config()
 
+const serverless = require("serverless-http")
 const express = require('express')
 const app = express()
 const mongoose = require('mongoose')
@@ -13,7 +14,8 @@ app.use(express.json({limit: "10mb"}))
 
 const usersRouter = require(`./routes/users`)
 const animeListRouter = require(`./routes/animeList`)
-app.use('/users', usersRouter, animeListRouter)
+app.use('/.netlify/functions/api', usersRouter, animeListRouter)
 // app.use('/users/:id', animeListRouter)
 
 app.listen(3000, () => console.log("STARTED"))
+module.exports.handler = serverless(app)
