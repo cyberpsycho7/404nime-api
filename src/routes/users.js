@@ -103,7 +103,8 @@ router.post("/registration", async(req, res) => {
             roles: [userRole.value]
         })
         await user.save()
-        res.json(user)
+        const token = genereteAccessToken(user.id, user.login, user.roles)
+        res.json({token, expiresIn: 3600})
     } catch (error) {
         res.status(500).json({message: error.message})
     }
@@ -122,7 +123,7 @@ router.post("/login", async(req, res) => {
             return res.status(400).json({message: `Wrong password`})
         }
         const token = genereteAccessToken(user._id, user.login, user.roles)
-        res.json({token})
+        res.json({token, expiresIn: 3600})
 
     } catch (error) {
         res.status(500).json({message: error.message})
