@@ -82,7 +82,7 @@ router.get('/', verifyAccessToken, async(req, res) => {
 router.post("/registration", async(req, res) => {
     try {
         const {name, login, password} = req.body
-        const condidate = await User.findOne({login})
+        const condidate = await User.findOne({login: login})
         if(condidate) {
             return res.status(400).json({message: "Login is already exists"})
         }
@@ -111,7 +111,7 @@ router.post("/registration", async(req, res) => {
 router.post("/login", async(req, res) => {
     try {
         const {login, password} = req.body
-        const user = await User.findOne({login})
+        const user = await User.findOne({login: login})
         if(!user) {
             return res.status(400).json({message: `User with login ${login} not found`})
         }
