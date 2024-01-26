@@ -1,9 +1,9 @@
 require('dotenv').config()
 
-const serverless = require("serverless-http")
 const express = require('express')
 const app = express()
 const mongoose = require('mongoose')
+const PORT = process.env.PORT || 3000;
 
 mongoose.connect(process.env.DATABASE_URL)
 const db = mongoose.connection
@@ -14,8 +14,7 @@ app.use(express.json({limit: "10mb"}))
 
 const usersRouter = require(`./routes/users`)
 const animeListRouter = require(`./routes/animeList`)
-app.use('/.netlify/functions/api', usersRouter, animeListRouter)
+app.use('/users', usersRouter, animeListRouter)
 // app.use('/users/:id', animeListRouter)
 
-app.listen(3000, () => console.log("STARTED"))
-module.exports.handler = serverless(app)
+app.listen(PORT, () => console.log("STARTED on port " + PORT))
