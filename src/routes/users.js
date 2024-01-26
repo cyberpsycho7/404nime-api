@@ -6,32 +6,34 @@ const bcrypt = require('bcryptjs')
 const passwordRegEx = /^([\W\w])([^\s]){7,16}$/
 const loginRegEx = /^[A-Za-z0-9]{4,16}$/
 const jwt = require('jsonwebtoken')
+const verifyAccessToken = require("../middleware/verifyAccessToken")
 
-const genereteAccessToken = (id, roles) => {
+const genereteAccessToken = (id, login, roles) => {
     const payload = {
         id,
+        login,
         roles
     }
     console.log(process.env.JWT_SECRET);
     return jwt.sign(payload, process.env.JWT_SECRET, {expiresIn: "24h"})
 }
 
-const verifyAccessToken = (req, res, next) => {
-    if(req.method === "OPTIONS") {
-        next()
-    }
-    try {
-        const token = req.headers.authorization.split(' ')[1]
-        if(!token) {
-            return res.status(403).json({message: "JWT required"})
-        }
-        const decodedData = jwt.verify(token, process.env.JWT_SECRET)
-        req.user = decodedData
-        next()
-    } catch (error) {
-        return res.status(403).json({message: error.message})
-    }
-}
+// const verifyAccessToken = (req, res, next) => {
+//     if(req.method === "OPTIONS") {
+//         next()
+//     }
+//     try {
+//         const token = req.headers.authorization.split(' ')[1]
+//         if(!token) {
+//             return res.status(403).json({message: "JWT required"})
+//         }
+//         const decodedData = jwt.verify(token, process.env.JWT_SECRET)
+//         req.user = decodedData
+//         next()
+//     } catch (error) {
+//         return res.status(403).json({message: error.message})
+//     }
+// }
 
 const getUser = async(req, res, next) => { 
     let user;
@@ -89,7 +91,6 @@ router.post("/registration", async(req, res) => {
         if(!loginRegEx.test(login)) {
             return res.status(400).json({message: "Login must contain 4-16 characters (only letters and numbers)"})
         }
-        console.log(password);
         if(!passwordRegEx.test(password)) {
             return res.status(400).json({message: "Password must contain 8-25 characters (letters and numbers required)"})
         }
@@ -108,6 +109,7 @@ router.post("/registration", async(req, res) => {
     }
 })
 
+//login
 router.post("/login", async(req, res) => {
     try {
         const {login, password} = req.body
@@ -119,7 +121,7 @@ router.post("/login", async(req, res) => {
         if(!validPassword) {
             return res.status(400).json({message: `Wrong password`})
         }
-        const token = genereteAccessToken(user._id, user.roles)
+        const token = genereteAccessToken(user._id, user.login, user.roles)
         res.json({token})
 
     } catch (error) {
@@ -127,11 +129,17 @@ router.post("/login", async(req, res) => {
     }
 })
 
-router.post("/:id/")
-
 // GET ONE
-router.get('/:id', getUser, async(req, res) => {
-    res.send(res.user)
+router.get('/me', verifyAccessToken, async(req, res) => {
+    try {
+        const user = await User.findOne({login: req.user.login})
+        if(!user) {
+            return res.status(500).json({message: "Authorization error"})
+        }
+        res.json(user)
+    } catch (error) {
+        res.status(500).json({message: error.message})
+    }
 })
 
 // router.post("/role", async(req, res) => {
@@ -146,33 +154,44 @@ router.get('/:id', getUser, async(req, res) => {
 // })
 
 // create one
-router.post('/', isUserExists, async(req, res) => {
+// router.post('/', isUserExists, async(req, res) => {
 
-    const user = new User({
-        name: req.body.name,
-        mail: req.body.mail,
-        avatar: req.body.avatar
-    })
+//     const user = new User({
+//         name: req.body.name,
+//         mail: req.body.mail,
+//         avatar: req.body.avatar
+//     })
 
-    try {
-        const newUser = await user.save()
-        res.status(201).json(newUser)
-    } catch (err) {
-        res.status(400).json({message: err.message})
-    }
-})
+//     try {
+//         const newUser = await user.save()
+//         res.status(201).json(newUser)
+//     } catch (err) {
+//         res.status(400).json({message: err.message})
+//     }
+// })
 
 // update one
-router.patch('/:id', getUser, isUserExists, async(req, res) => {
-    if(req.body.name != null) {
-        res.user.name = req.body.name
+router.patch('/me', verifyAccessToken, async(req, res) => {
+    const {name, password, avatar} = req.body
+    let update = {}
+    console.log(req.body);
+
+    if(name != null) {
+        update.name = name
     }
-    if(req.body.mail != null) {
-        res.user.mail = req.body.mail
+    if(password != null) {
+        if(!passwordRegEx.test(password)) {
+            return res.status(400).json({message: "Password must contain 8-25 characters (letters and numbers required)"})
+        }
+        const hashedPassword = bcrypt.hashSync(password, 5)
+        update.password = hashedPassword
+    }
+    if(avatar != null) {
+        update.avatar = avatar
     }
 
     try {
-        const updatedUser = await res.user.save()
+        const updatedUser = await User.findOneAndUpdate({login: req.user.login}, update, {new: true})
         res.json(updatedUser)
     } catch (error) {
         res.status(400).json({message: error.message})
