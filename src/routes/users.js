@@ -5,6 +5,8 @@ const Role = require('../models/roleModel')
 const bcrypt = require('bcryptjs')
 const passwordRegEx = /^([\W\w])([^\s]){7,16}$/
 const loginRegEx = /^[A-Za-z0-9]{4,16}$/
+const nameRegEx = /^.{2,16}$/
+const bioRegEx = /^.{0,500}$/
 const jwt = require('jsonwebtoken')
 const verifyAccessToken = require("../middleware/verifyAccessToken")
 
@@ -91,9 +93,13 @@ router.post("/registration", async(req, res) => {
         if(!loginRegEx.test(login)) {
             return res.status(400).json({message: "Login must contain 4-16 characters (only letters and numbers)"})
         }
+        if(!nameRegEx.test(name)) {
+            return res.status(400).json({message: "Username must contain 2-16 characters"})
+        }
         if(!passwordRegEx.test(password)) {
             return res.status(400).json({message: "Password must contain 8-25 characters (letters and numbers required)"})
         }
+
         const hashedPassword = bcrypt.hashSync(password, 5)
         const userRole = await Role.findOne({value: "USER"})
         const user = new User({
@@ -173,11 +179,20 @@ router.get('/me', verifyAccessToken, async(req, res) => {
 
 // update one
 router.patch('/me', verifyAccessToken, async(req, res) => {
-    const {name, password, avatar} = req.body
+    const {name, password, avatar, cover, bio, login} = req.body
     let update = {}
     console.log(req.body);
 
+    if(login != null) {
+        if(!loginRegEx.test(login)) {
+            return res.status(400).json({message: "Login must contain 4-16 characters (only letters and numbers)"})
+        }
+        update.login = login
+    }
     if(name != null) {
+        if(!nameRegEx.test(name)) {
+            return res.status(400).json({message: "Username must contain 2-16 characters"})
+        }
         update.name = name
     }
     if(password != null) {
@@ -189,6 +204,15 @@ router.patch('/me', verifyAccessToken, async(req, res) => {
     }
     if(avatar != null) {
         update.avatar = avatar
+    }
+    if(cover != null) {
+        update.cover = cover
+    }
+    if(bio != null) {
+        if(bio.length > 500) {
+            return res.status(400).json({message: "Bio must contain < 500 letters"})
+        }
+        update.bio = bio
     }
 
     try {

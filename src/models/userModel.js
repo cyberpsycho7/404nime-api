@@ -22,8 +22,19 @@ const userSchema = new mongoose.Schema({
     avatar: {
         type: String,
         required: false,
-        default: "https://i.pinimg.com/564x/4b/2e/02/4b2e0231a18413945ece04c8d235079f.jpg"
+        default: "https://i.pinimg.com/originals/1e/05/51/1e0551e5a7a0dba991a0f20cf5f6470d.jpg"
     },
+    cover: {
+        type: String,
+        required: false,
+        default: "https://i.pinimg.com/originals/a6/b2/56/a6b256f4640c44ed0536b8a5e2932766.jpg"
+    },
+    bio: {
+        type: String,
+        required: false,
+        default: "No bio yet..."
+    },
+
     creationDate: {
         type: Date,
         required: true,
