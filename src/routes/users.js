@@ -9,16 +9,28 @@ const nameRegEx = /^.{2,16}$/
 const bioRegEx = /^.{0,500}$/
 const jwt = require('jsonwebtoken')
 const verifyAccessToken = require("../middleware/verifyAccessToken")
+const generateAccessToken = require("../helpers/generateAccessToken")
+const generateRefreshToken = require("../helpers/generateRefreshToken")
 
-const genereteAccessToken = (id, login, roles) => {
-    const payload = {
-        id,
-        login,
-        roles
-    }
-    console.log(process.env.JWT_SECRET);
-    return jwt.sign(payload, process.env.JWT_SECRET, {expiresIn: "24h"})
-}
+// const generateAccessToken = (id, login, roles) => {
+//     const payload = {
+//         id,
+//         login,
+//         roles
+//     }
+//     console.log(process.env.JWT_ACCESS_SECRET);
+//     return jwt.sign(payload, process.env.JWT_ACCESS_SECRET, {expiresIn: "5m"})
+// }
+// const generateRefreshToken = (id, login, roles) => {
+//     const payload = {
+//         id,
+//         login,
+//         roles
+//     }
+
+//     console.log(process.env.JWT_REFRESH_SECRET);
+//     return jwt.sign(payload, process.env.JWT_REFRESH_SECRET, {expiresIn: "30d"})
+// }
 
 // const verifyAccessToken = (req, res, next) => {
 //     if(req.method === "OPTIONS") {
@@ -52,25 +64,25 @@ const getUser = async(req, res, next) => {
     next()
 }
 
-const isUserExists = async(req, res, next) => {
-    let userName;
-    let userMail;
-    try {
-        userName = await User.find({name: req.body.name})
-        userMail = await User.find({mail: req.body.mail})
-        if(userName.length && userMail.length) {
-            return res.status(400).json({message: "Name and Mail are already exists"})
-        } else if(userName.length) {
-            return res.status(400).json({message: "Name is already exists"})
-        } else if(userMail.length) {
-            return res.status(400).json({message: "Mail is already exists"})
-        }
-    } catch (error) {
-        return res.status(500).json({message: error.message})
-    }
+// const isUserExists = async(req, res, next) => {
+//     let userName;
+//     let userMail;
+//     try {
+//         userName = await User.find({name: req.body.name})
+//         userMail = await User.find({mail: req.body.mail})
+//         if(userName.length && userMail.length) {
+//             return res.status(400).json({message: "Name and Mail are already exists"})
+//         } else if(userName.length) {
+//             return res.status(400).json({message: "Name is already exists"})
+//         } else if(userMail.length) {
+//             return res.status(400).json({message: "Mail is already exists"})
+//         }
+//     } catch (error) {
+//         return res.status(500).json({message: error.message})
+//     }
 
-    next()
-}
+//     next()
+// }
 
 // GET all
 router.get('/', verifyAccessToken, async(req, res) => {
@@ -109,8 +121,9 @@ router.post("/registration", async(req, res) => {
             roles: [userRole.value]
         })
         await user.save()
-        const token = genereteAccessToken(user.id, user.login, user.roles)
-        res.json({token, expiresIn: 3600})
+        const accessToken = generateAccessToken(user.id, user.login, user.roles)
+        const refreshToken = generateRefreshToken(user.id, user.login, user.roles)
+        res.json({accessToken, refreshToken, expiresIn: 300})
     } catch (error) {
         res.status(500).json({message: error.message})
     }
@@ -128,8 +141,9 @@ router.post("/login", async(req, res) => {
         if(!validPassword) {
             return res.status(400).json({message: `Wrong password`})
         }
-        const token = genereteAccessToken(user._id, user.login, user.roles)
-        res.json({token, expiresIn: 3600})
+        const accessToken = generateAccessToken(user._id, user.login, user.roles)
+        const refreshToken = generateRefreshToken(user.id, user.login, user.roles)
+        res.json({accessToken, refreshToken, expiresIn: 300})
 
     } catch (error) {
         res.status(500).json({message: error.message})

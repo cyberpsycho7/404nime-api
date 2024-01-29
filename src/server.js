@@ -16,7 +16,8 @@ app.use(cors())
 
 const usersRouter = require(`./routes/users`)
 const animeListRouter = require(`./routes/animeList`)
-app.use('/users', usersRouter, animeListRouter)
+const JWTRouter = require(`./routes/JWT`)
+app.use('/users', usersRouter, animeListRouter, JWTRouter)
 // app.use('/users/:id', animeListRouter)
 
 app.listen(PORT, () => console.log("STARTED on port " + PORT))
