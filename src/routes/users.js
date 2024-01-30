@@ -98,7 +98,7 @@ router.get('/:login', async(req, res) => {
     try {
         const {login} = req.params
 
-        const user = User.findOne({login})
+        const user = await User.findOne({login})
         if(!user) {
             return res.status(404).json({message: `User with login '${login}' not found`})
         }
