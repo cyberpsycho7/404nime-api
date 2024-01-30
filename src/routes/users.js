@@ -102,7 +102,8 @@ router.get('/:login', async(req, res) => {
         if(!user) {
             return res.status(404).json({message: `User with login '${login}' not found`})
         }
-        res.json({...user, password: null})
+        user.password = null
+        res.json(user)
     } catch (error) {
         res.status(500).json({message: error.message})
     }
