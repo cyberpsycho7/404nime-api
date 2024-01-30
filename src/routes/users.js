@@ -94,6 +94,20 @@ router.get('/', verifyAccessToken, async(req, res) => {
     }
 })
 
+router.get('/:login', async(req, res) => {
+    try {
+        const {login} = req.params
+
+        const user = User.findOne({login})
+        if(!user) {
+            return res.status(404).json({message: `User with login '${login}' not found`})
+        }
+        res.json({...user, password: null})
+    } catch (error) {
+        res.status(500).json({message: error.message})
+    }
+})
+
 //register
 router.post("/registration", async(req, res) => {
     try {
@@ -155,7 +169,7 @@ router.get('/me', verifyAccessToken, async(req, res) => {
     try {
         const user = await User.findOne({login: req.user.login})
         if(!user) {
-            return res.status(500).json({message: "Authorization error"})
+            return res.status(401).json({message: "Authorization error"})
         }
         res.json(user)
     } catch (error) {

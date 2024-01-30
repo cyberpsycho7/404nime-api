@@ -8,13 +8,13 @@ const verifyRefreshToken = (req, res, next) => {
     try {
         const token = req.headers.authorization.split(' ')[1]
         if(!token) {
-            return res.status(401).json({message: "Unauthorized"})
+            return res.status(401).json({message: "JWT Required"})
         }
         const decodedData = jwt.verify(token, process.env.JWT_REFRESH_SECRET)
         req.user = decodedData
         next()
     } catch (error) {
-        return res.status(403).json({message: error.message})
+        return res.status(401).json({message: error.message})
     }
 }
 
