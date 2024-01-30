@@ -5,7 +5,7 @@ const User = require('../models/userModel')
 const verifyRefreshToken = require('../middleware/verifyRefreshToken')
 const generateAccessToken = require('../helpers/generateAccessToken')
 
-router.get("/refresh-token", verifyRefreshToken, async(req, res) => {
+router.get("/auth/refresh-token", verifyRefreshToken, async(req, res) => {
     try {
         const accessToken = generateAccessToken(req.user.id, req.user.login, req.user.roles)
         res.json({accessToken, expiresIn: 300})

@@ -109,7 +109,7 @@ router.get('/:login', async(req, res) => {
 })
 
 //register
-router.post("/registration", async(req, res) => {
+router.post("/auth/registration", async(req, res) => {
     try {
         const {name, login, password} = req.body
         const condidate = await User.findOne({login: login})
@@ -144,7 +144,7 @@ router.post("/registration", async(req, res) => {
 })
 
 //login
-router.post("/login", async(req, res) => {
+router.post("/auth/login", async(req, res) => {
     try {
         const {login, password} = req.body
         const user = await User.findOne({login: login})
@@ -165,7 +165,7 @@ router.post("/login", async(req, res) => {
 })
 
 // GET ONE
-router.get('/me', verifyAccessToken, async(req, res) => {
+router.get('/auth/me', verifyAccessToken, async(req, res) => {
     try {
         const user = await User.findOne({login: req.user.login})
         if(!user) {
