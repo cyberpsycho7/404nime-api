@@ -207,10 +207,11 @@ router.get('/auth/me', verifyAccessToken, async(req, res) => {
 // })
 
 // update one
-router.patch('/me', verifyAccessToken, async(req, res) => {
-    const {name, password, avatar, cover, bio, login} = req.body
+router.patch('/auth/me', verifyAccessToken, async(req, res) => {
+    const {name, newPassword, oldPassword, avatar, cover, bio, login} = req.body
     let update = {}
     console.log(req.body);
+    const user = await User.findOne({login: req.user.login})
 
     if(login != null) {
         if(!loginRegEx.test(login)) {
@@ -224,11 +225,14 @@ router.patch('/me', verifyAccessToken, async(req, res) => {
         }
         update.name = name
     }
-    if(password != null) {
-        if(!passwordRegEx.test(password)) {
+    if(newPassword != null) {
+        if(!bcrypt.compareSync(oldPassword, user.password)) {
+            return res.status(400).json({message: "Wrong password"})
+        }
+        if(!passwordRegEx.test(newPassword)) {
             return res.status(400).json({message: "Password must contain 8-25 characters (letters and numbers required)"})
         }
-        const hashedPassword = bcrypt.hashSync(password, 5)
+        const hashedPassword = bcrypt.hashSync(newPassword, 5)
         update.password = hashedPassword
     }
     if(avatar != null) {
