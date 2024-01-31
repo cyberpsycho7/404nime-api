@@ -250,9 +250,13 @@ router.patch('/auth/me', verifyAccessToken, async(req, res) => {
 
     try {
         await User.findOneAndUpdate({login: req.user.login}, update, {new: true})
-        const refreshToken = generateRefreshToken(user._id, login, user.roles)
-        const accessToken = generateAccessToken(user._id, login, user.roles)
-        res.json({accessToken, refreshToken})
+        if(login != null) {
+            const refreshToken = generateRefreshToken(user._id, login, user.roles)
+            const accessToken = generateAccessToken(user._id, login, user.roles)
+            res.json({accessToken, refreshToken})
+        } else {
+            res.json({message: "Changes have been saved successfully"})
+        }
     } catch (error) {
         res.status(400).json({message: error.message})
     }
