@@ -118,13 +118,13 @@ router.post("/auth/registration", async(req, res) => {
             return res.status(400).json({message: "Login is already exists"})
         }
         if(!loginRegEx.test(login)) {
-            return res.status(400).json({message: "Login must contain 4-16 characters (only letters and numbers)"})
+            return res.status(400).json({message: "Login must contain 4-16 characters (only latin letters and numbers)"})
         }
         if(!nameRegEx.test(name)) {
             return res.status(400).json({message: "Username must contain 2-16 characters"})
         }
         if(!passwordRegEx.test(password)) {
-            return res.status(400).json({message: "Password must contain 8-25 characters (letters and numbers required)"})
+            return res.status(400).json({message: "Password must contain 8-25 characters (latin letters and numbers required)"})
         }
 
         const hashedPassword = bcrypt.hashSync(password, 5)
@@ -215,7 +215,7 @@ router.patch('/auth/me', verifyAccessToken, async(req, res) => {
 
     if(login != null) {
         if(!loginRegEx.test(login)) {
-            return res.status(400).json({message: "Login must contain 4-16 characters (only letters and numbers)"})
+            return res.status(400).json({message: "Login must contain 4-16 characters (only latin letters and numbers)"})
         }
         update.login = login
     }
@@ -230,7 +230,7 @@ router.patch('/auth/me', verifyAccessToken, async(req, res) => {
             return res.status(400).json({message: "Wrong password"})
         }
         if(!passwordRegEx.test(newPassword)) {
-            return res.status(400).json({message: "Password must contain 8-25 characters (letters and numbers required)"})
+            return res.status(400).json({message: "Password must contain 8-25 characters (latin letters and numbers required)"})
         }
         const hashedPassword = bcrypt.hashSync(newPassword, 5)
         update.password = hashedPassword
@@ -249,8 +249,10 @@ router.patch('/auth/me', verifyAccessToken, async(req, res) => {
     }
 
     try {
-        const updatedUser = await User.findOneAndUpdate({login: req.user.login}, update, {new: true})
-        res.json(updatedUser)
+        await User.findOneAndUpdate({login: req.user.login}, update, {new: true})
+        const refreshToken = generateRefreshToken(user._id, login, user.roles)
+        const accessToken = generateAccessToken(user._id, login, user.roles)
+        res.json({accessToken, refreshToken})
     } catch (error) {
         res.status(400).json({message: error.message})
     }
