@@ -1,6 +1,6 @@
 const mongoose = require('mongoose')
 
-const favoriteAnimeSchema = new mongoose.Schema({
+const watchedAnimeSchema = new mongoose.Schema({
     animeId: {
         type: String,
         required: true
@@ -35,4 +35,4 @@ const favoriteAnimeSchema = new mongoose.Schema({
     },
 })
 
-module.exports = mongoose.model('FavoriteAnime', favoriteAnimeSchema)
+module.exports = mongoose.model('WatchedAnime', watchedAnimeSchema)
