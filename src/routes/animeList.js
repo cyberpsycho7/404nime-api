@@ -10,7 +10,7 @@ router.get("/me/favorites", verifyAccessToken, async(req, res) => {
         if(!user) {
             return res.status(404).json({message: "JWT ERROR"})
         }
-        const favoriteList = await FavoriteAnime.find()
+        const favoriteList = await FavoriteAnime.find({userLogin: user.login})
         res.json(favoriteList)
     } catch (error) {
         res.status(500).json({message: error.message})
@@ -53,7 +53,7 @@ router.delete("/me/favorites/:animeId", verifyAccessToken, async(req, res) => {
         }
         const isAnimeInList = await FavoriteAnime.findOne({animeId: req.params.animeId})
         if(!isAnimeInList) {
-            return res.status(404).json(`Anime with id ${req.params.animeId} not found in user '${user.login}' lists`)
+            return res.status(404).json(`Anime with id '${req.params.animeId}' not found in user '${user.login}' lists`)
         }
         const newFavoriteList = await FavoriteAnime.findOneAndDelete({animeId: req.params.animeId}, {new: true})
         // const newFavoriteList = await FavoriteAnime.find()
