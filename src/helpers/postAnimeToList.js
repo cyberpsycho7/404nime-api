@@ -6,7 +6,7 @@ const postAnimeToList = async(req, res, model) => {
         if(!user) {
             return res.status(401).json({message: "JWT ERROR"})
         }
-        const isAnimeInList = await model.findOne({userLogin: user.login, animeId})
+        const isAnimeInList = await model.findOne({userId: user.id, animeId})
         if(isAnimeInList) {
             return res.status(400).json({message: "Anime already in User list"})
         }
@@ -19,7 +19,7 @@ const postAnimeToList = async(req, res, model) => {
             title,
             releaseDate,
             type,
-            userLogin: user.login
+            userId: user.id
         })
         await newList.save()
         return res.json(newList)

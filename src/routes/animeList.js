@@ -9,8 +9,8 @@ const getAnimeFromList = require('../helpers/getAnimeFromList')
 const postAnimeToList = require('../helpers/postAnimeToList')
 const deleteAnimeFromList = require('../helpers/deleteAnimeFromList')
 
-router.get("/:login/favorites", async(req, res) => {
-    getAnimeFromList(req.params.login, res, FavoriteAnime)
+router.get("/:id/favorites", async(req, res) => {
+    getAnimeFromList(req.params.id, res, FavoriteAnime)
 
 })
 router.post("/me/favorites", verifyAccessToken, async(req, res) => {
@@ -22,8 +22,8 @@ router.delete("/me/favorites/:animeId", verifyAccessToken, async(req, res) => {
 })
 
 //TO WATCH ROUTES
-router.get("/:login/to-watch", verifyAccessToken, async(req, res) => {
-    getAnimeFromList(req.params.login, res, ToWatchAnime)
+router.get("/:id/to-watch", async(req, res) => {
+    getAnimeFromList(req.params.id, res, ToWatchAnime)
 
 })
 router.post("/me/to-watch", verifyAccessToken, async(req, res) => {
@@ -35,8 +35,8 @@ router.delete("/me/to-watch/:animeId", verifyAccessToken, async(req, res) => {
 })
 
 //WATCHED
-router.get("/:login/watched", verifyAccessToken, async(req, res) => {
-    getAnimeFromList(req.params.login, res, WatchedAnime)
+router.get("/:id/watched", async(req, res) => {
+    getAnimeFromList(req.params.id, res, WatchedAnime)
 
 })
 router.post("/me/watched", verifyAccessToken, async(req, res) => {

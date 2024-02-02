@@ -3,6 +3,7 @@ const router = express.Router()
 const User = require('../models/userModel')
 const Role = require('../models/roleModel')
 const bcrypt = require('bcryptjs')
+const sharp = require('sharp');
 const passwordRegEx = /^([A-Za-z0-9])([^\s]){7,16}$/
 const loginRegEx = /^[A-Za-z0-9]{4,16}$/
 const nameRegEx = /^.{2,16}$/
@@ -11,43 +12,6 @@ const jwt = require('jsonwebtoken')
 const verifyAccessToken = require("../middleware/verifyAccessToken")
 const generateAccessToken = require("../helpers/generateAccessToken")
 const generateRefreshToken = require("../helpers/generateRefreshToken")
-
-// const generateAccessToken = (id, login, roles) => {
-//     const payload = {
-//         id,
-//         login,
-//         roles
-//     }
-//     console.log(process.env.JWT_ACCESS_SECRET);
-//     return jwt.sign(payload, process.env.JWT_ACCESS_SECRET, {expiresIn: "5m"})
-// }
-// const generateRefreshToken = (id, login, roles) => {
-//     const payload = {
-//         id,
-//         login,
-//         roles
-//     }
-
-//     console.log(process.env.JWT_REFRESH_SECRET);
-//     return jwt.sign(payload, process.env.JWT_REFRESH_SECRET, {expiresIn: "30d"})
-// }
-
-// const verifyAccessToken = (req, res, next) => {
-//     if(req.method === "OPTIONS") {
-//         next()
-//     }
-//     try {
-//         const token = req.headers.authorization.split(' ')[1]
-//         if(!token) {
-//             return res.status(403).json({message: "JWT required"})
-//         }
-//         const decodedData = jwt.verify(token, process.env.JWT_SECRET)
-//         req.user = decodedData
-//         next()
-//     } catch (error) {
-//         return res.status(403).json({message: error.message})
-//     }
-// }
 
 const getUser = async(req, res, next) => { 
     let user;
@@ -64,25 +28,35 @@ const getUser = async(req, res, next) => {
     next()
 }
 
-// const isUserExists = async(req, res, next) => {
-//     let userName;
-//     let userMail;
-//     try {
-//         userName = await User.find({name: req.body.name})
-//         userMail = await User.find({mail: req.body.mail})
-//         if(userName.length && userMail.length) {
-//             return res.status(400).json({message: "Name and Mail are already exists"})
-//         } else if(userName.length) {
-//             return res.status(400).json({message: "Name is already exists"})
-//         } else if(userMail.length) {
-//             return res.status(400).json({message: "Mail is already exists"})
-//         }
-//     } catch (error) {
-//         return res.status(500).json({message: error.message})
-//     }
+const optimizeImage = async(image, w, h) => {
+    try {
+        let arrData = `${image}`.split(',');
+        let imgBuffer = Buffer.from(arrData[1], 'base64');
+        let bufferImgCompressed = await sharp(imgBuffer)
+        .resize({ width: w, height: h })
+        .toBuffer()
+        .then(data => { return data; })
+        .catch(err => { 
+            return false
+        });
+        const compressedImg =  arrData[0] + "," + bufferImgCompressed.toString('base64')
+        return compressedImg
+        
+    } catch (error) {
+        return false
+    }
 
-//     next()
-// }
+}
+
+router.get('/image', async(req, res) => {
+    try {
+        // const user = await User.findOne({login: "touchme"})
+        let image;
+        res.json(arrData[0] + "," + imgBase64Compressed)
+    } catch (error) {
+        res.status(400).json({message: error.message})
+    }
+})
 
 // GET all
 router.get('/', verifyAccessToken, async(req, res) => {
@@ -178,39 +152,11 @@ router.get('/auth/me', verifyAccessToken, async(req, res) => {
     }
 })
 
-// router.post("/role", async(req, res) => {
-//     try {
-//         const def = new Role()
-//         const def2 = new Role({value: "ADMIN"})
-//         await def.save()
-//         await def2.save()
-//     } catch {
-//         console.log("Error");
-//     }
-// })
-
-// create one
-// router.post('/', isUserExists, async(req, res) => {
-
-//     const user = new User({
-//         name: req.body.name,
-//         mail: req.body.mail,
-//         avatar: req.body.avatar
-//     })
-
-//     try {
-//         const newUser = await user.save()
-//         res.status(201).json(newUser)
-//     } catch (err) {
-//         res.status(400).json({message: err.message})
-//     }
-// })
-
 // update one
 router.patch('/auth/me', verifyAccessToken, async(req, res) => {
     const {name, newPassword, oldPassword, avatar, cover, bio, login} = req.body
     let update = {}
-    console.log(req.body);
+    // console.log(req.body);
     const user = await User.findOne({login: req.user.login})
 
     if(login != null) {
@@ -236,10 +182,14 @@ router.patch('/auth/me', verifyAccessToken, async(req, res) => {
         update.password = hashedPassword
     }
     if(avatar != null) {
-        update.avatar = avatar
+        const optimizedImage = await optimizeImage(avatar, 300, 300)
+        if(!optimizedImage) return res.status(500).json({message: "Error while optimizing avatar image"})
+        else update.avatar = optimizedImage
     }
     if(cover != null) {
-        update.cover = cover
+        const optimizedImage = await optimizeImage(cover, 1920, 330)
+        if(!optimizedImage) return res.status(500).json({message: "Error while optimizing cover image"})
+        else update.cover = optimizedImage
     }
     if(bio != null) {
         if(bio.length > 500) {
@@ -249,13 +199,13 @@ router.patch('/auth/me', verifyAccessToken, async(req, res) => {
     }
 
     try {
-        await User.findOneAndUpdate({login: req.user.login}, update, {new: true})
+        const updatedUser = await User.findOneAndUpdate({login: req.user.login}, update, {new: true})
         if(login != null) {
             const refreshToken = generateRefreshToken(user._id, login, user.roles)
             const accessToken = generateAccessToken(user._id, login, user.roles)
-            res.json({accessToken, refreshToken})
+            res.json({updatedUser, accessToken, refreshToken})
         } else {
-            res.json({message: "Changes have been saved successfully"})
+            res.json(updatedUser)
         }
     } catch (error) {
         res.status(400).json({message: error.message})

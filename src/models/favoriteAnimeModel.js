@@ -5,7 +5,7 @@ const favoriteAnimeSchema = new mongoose.Schema({
         type: String,
         required: true
     },
-    userLogin: {
+    userId: {
         type: String,
         required: true
     },
