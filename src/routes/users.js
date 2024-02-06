@@ -33,7 +33,7 @@ const optimizeImage = async(image, w, h) => {
         let arrData = `${image}`.split(',');
         let imgBuffer = Buffer.from(arrData[1], 'base64');
         let bufferImgCompressed = await sharp(imgBuffer)
-        .resize({ width: w, height: h })
+        .resize({width: w, height: h, fit: "cover", position: "centre"})
         .toBuffer()
         .then(data => { return data; })
         .catch(err => { 
